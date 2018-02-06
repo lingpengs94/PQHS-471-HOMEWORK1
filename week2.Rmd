@@ -1,0 +1,215 @@
+---
+title: "PQHS 471 Homework 2"
+author: "Andrew Shan"
+date: "2/4/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ISLR)
+data(Auto)
+```
+
+## Qustion 9
+```{r}
+pairs(Auto)
+```
+```{r}
+names(Auto)
+```
+
+```{r}
+cor(Auto[1:8])
+```
+
+```{r}
+m1 <- lm(mpg~.- name, data = Auto)
+summary(m1)
+```
+
+(i) The model is statistically important, so there is evidence showing a relationship between `mpg` and other predictors. 
+(ii) `displacement`, `weight`, `year`, and `origin` appear to have a statistically significant relationship to the response `mpg`.
+(iii) The coefficient for the `year` suggest that with every year of Auto increasing, the mpg `will` increase 0.75.
+
+```{r}
+par(mfrow = c(2,2))
+plot(m1)
+```
+
+The normal Q-Q plot indicates some problems with non-linearity in the data set. Subject 14 identifies the unusual high leverage. Some points have high leverage points in residuals points. 
+
+```{r}
+ m2 <- lm(mpg~displacement*weight*year*origin, data = Auto)
+summary(m2)
+```
+
+We choose four variables which have a statistically significant relationship to the outcome. From the p-values, we can see that none of interaction is significant. 
+
+```{r}
+par(mfrow = c(2, 2))
+plot(log(Auto$weight), Auto$mpg)
+plot(sqrt(Auto$weight), Auto$mpg)
+plot((Auto$weight)^2, Auto$mpg)
+```
+
+The plot result shows that squat-root transformation gives a most linear looking. 
+
+## Question 15
+
+# (A)
+
+```{r}
+library(MASS)
+attach(Boston)
+names(Boston)
+```
+
+```{r}
+summary(lm(crim~zn))
+summary(lm(crim~indus))
+summary(lm(crim~chas))
+summary(lm(crim~nox))
+summary(lm(crim~rm))
+summary(lm(crim~age))
+summary(lm(crim~dis))
+summary(lm(crim~rad))
+summary(lm(crim~tax))
+summary(lm(crim~ptratio))
+summary(lm(crim~black))
+summary(lm(crim~lstat))
+summary(lm(crim~medv))
+```
+
+ All predictors have a p-value less than 0.05 except `chas`, so we can conclude that there is a statistically significant association between each predictor and the response except for the `chas` predictor.
+ 
+
+# (B)
+```{r}
+summary(lm(crim~., data= Boston))
+```
+ 
+ For the predictors `zn`, `dis`, `rad`, `black`, and `medv`, we can reject the null hypothesis.
+ 
+# (C)
+ 
+```{r}
+zn<-lm(crim~zn)
+indus<-lm(crim~indus)
+chas<-lm(crim~chas)
+nox <- lm(crim~nox)
+rm <- lm(crim~rm)
+age<- lm(crim~age)
+dis <- lm(crim~dis)
+rad <- lm(crim~rad) 
+tax <- lm(crim~tax)
+ptr <- lm(crim~ptratio)
+blc <- lm(crim~black)
+lst <- lm(crim~lstat)
+medv <- lm(crim~medv)
+all <- lm(crim~., data= Boston)
+```
+
+```{r}
+univariate <- vector("numeric", 0)
+univariate <- c(univariate, zn$coefficients[2])
+univariate <- c(univariate, indus$coefficients[2])
+univariate <- c(univariate, chas$coefficients[2])
+univariate <- c(univariate, nox$coefficients[2])
+univariate <- c(univariate, rm$coefficients[2])
+univariate <- c(univariate, age$coefficients[2])
+univariate <- c(univariate, dis$coefficients[2])
+univariate <- c(univariate, rad$coefficients[2])
+univariate <- c(univariate, tax$coefficients[2])
+univariate <- c(univariate, ptr$coefficients[2])
+univariate <- c(univariate, blc$coefficients[2])
+univariate <- c(univariate, lst$coefficients[2])
+univariate <- c(univariate, medv$coefficients[2])
+multiple <- vector("numeric", 0)
+multiple <-c(multiple, all$coefficients)
+multiple <- multiple[-1]
+plot(univariate,multiple)
+```
+ 
+ There is difference between univaraite and multiple regression coefficients. 
+ 
+# (D)
+
+```{r}
+summary(lm(crim ~ poly(zn, 3),data = Boston))
+summary(lm(crim ~ poly(indus, 3),data = Boston))
+summary(lm(crim ~ poly(nox, 3),data = Boston))
+summary(lm(crim ~ poly(rm, 3),data = Boston))
+summary(lm(crim ~ poly(age, 3),data = Boston))
+summary(lm(crim ~ poly(dis, 3),data = Boston))
+summary(lm(crim ~ poly(rad, 3),data = Boston))
+summary(lm(crim ~ poly(tax,3),data = Boston))
+summary(lm(crim ~ poly(ptratio, 3),data = Boston))
+summary(lm(crim ~ poly(black, 3),data = Boston))
+summary(lm(crim ~ poly(lstat, 3),data = Boston))
+summary(lm(crim ~ poly(medv, 3),data = Boston))
+```
+All the predictors except `black` show the evidence of non-linear association between predictors and the response based on the p-value. 
+
+## Titanic
+
+```{r}
+Titanic <- read.csv("train.csv")
+library(MASS)
+library(rms)
+library(titanic)
+attach(Titanic)
+test <- 1:(length(Survived)/5)
+train <- (length(Survived) / 5 + 1):length(Survived)
+Titanic.train <- Titanic[train, ]
+Titanic.test <- Titanic[test, ]
+Surived.test <- Survived[test]
+```
+
+```{r}
+glm.fits =glm(Survived~Pclass+Sex+Age+SibSp+Parch+Fare+Embarked,data = Titanic.train, family = binomial)
+glm.probs = predict(glm.fits,Titanic.test, type ="response")
+glm.pred =rep(0, length(glm.probs))
+glm.pred[glm.probs >.5] =  1
+table(glm.pred, Surived.test)
+```
+
+```{r}
+mean(glm.pred!=Surived.test)
+```
+```{r}
+summary(glm.fits)
+```
+```{r}
+glm.fits1 =glm(Survived~factor(Pclass)+Sex+Age+SibSp+factor(Parch)+Fare+Embarked,data = Titanic.train, family = binomial)
+glm.probs1 = predict(glm.fits1,Titanic.test, type ="response")
+glm.pred1 =rep(0, length(glm.probs1))
+glm.pred1[glm.probs1 >.5] =  1
+table(glm.pred1, Surived.test)
+mean(glm.pred1!=Surived.test)
+summary(glm.fits1)
+```
+```{r}
+glm.fits2 =glm(Survived~factor(Pclass)+Sex+Age,data = Titanic.train, family = binomial)
+glm.probs2 = predict(glm.fits2,Titanic.test, type ="response")
+glm.pred2 =rep(0, length(glm.probs2))
+glm.pred2[glm.probs2 >.5] =  1
+table(glm.pred2, Surived.test)
+mean(glm.pred2!=Surived.test)
+summary(glm.fits2)
+```
+
+Compared to others, they all looked at the dataset before starting building their own predicting model and used histogram and other tools to analyze distribution of the variables. I treated all discrete number as categorical variables, and only included statistically significant variables in final model.
+The final model will be survived = 4.15 - 1.62*`Pclass2`-2.85*`Pclass3`-2.45*`Sexmale`-0.04*`Age`
+```{r}
+Survived = predict(glm.fits2,titanic_test, type ="response")
+Survived =rep(0, length(Survived))
+Survived[Survived >.5] =  1
+preiction <- data.frame(titanic_test$PassengerId,Survived)
+```
+
+
+
