@@ -1,0 +1,81 @@
+---
+title: "PQHS 471 hw3"
+author: "Andrew Shan"
+date: "2/4/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ISLR)
+library(MASS)
+```
+
+```{r}
+attach(Boston)
+crim1 <- rep(0, length(crim))
+crim1[crim > median(crim)] <- 1
+Boston<- data.frame(Boston, crim1)
+```
+
+```{r}
+train <- 1:(length(crim) / 2)
+test <- (length(crim) / 2 + 1):length(crim)
+Boston.train <- Boston[train, ]
+Boston.test <- Boston[test, ]
+crim1.test <- crim1[test]
+```
+```{r}
+glm.fits= glm(crim1~. - crim1 -crim, data = Boston,family = binomial, subset = train)
+```
+```{r}
+glm.probs = predict(glm.fits, Boston.test, type ="response")
+glm.pred = rep(0, length(glm.probs))
+glm.pred[glm.probs >0.5] <- 1
+table(glm.pred, crim1.test)
+```
+```{r}
+mean(glm.pred!= crim1.test)
+```
+
+The test error rate is 18.18% for the logistic regression.
+
+```{r}
+lda.fit = lda(crim1~. - crim1 -crim, data = Boston, subset = train)
+lda.pred= predict(lda.fit, Boston.test)
+table(lda.pred$class, crim1.test)
+```
+```{r}
+mean(lda.pred$class!=crim1.test)
+```
+
+For this LDA, the test error rate is 13.43%
+
+```{r}
+library(class)
+train.X=cbind(zn, indus, chas, nox, rm, age, dis, rad, tax, ptratio, black, lstat, medv)[train, ]
+test.X=cbind(zn, indus, chas, nox, rm, age, dis, rad, tax, ptratio, black, lstat, medv)[test, ]
+train.crim1=crim1[train]
+```
+```{r}
+set.seed(1)
+knn.pred=knn(train.X,test.X,train.crim1, k=1)
+table(knn.pred, crim1.test)
+mean(knn.pred!=crim1.test)
+```
+```{r}
+knn.pred=knn(train.X,test.X,train.crim1, k=10)
+table(knn.pred, crim1.test)
+mean(knn.pred!=crim1.test)
+```
+
+```{r}
+knn.pred=knn(train.X,test.X,train.crim1, k=100)
+table(knn.pred, crim1.test)
+mean(knn.pred!=crim1.test)
+```
+For KNN(k=10), the test error rate is 11.85%.
+For KNN(k=100), the test error rate is 49.01%.
